@@ -12,6 +12,7 @@ from datetime import date
 import numpy as np
 import pandas as pd
 import json
+import os
 
 
 __all__  = ['scrape_data', 'make_url', 'cache_data']
@@ -29,22 +30,21 @@ __all__  = ['scrape_data', 'make_url', 'cache_data']
     Returns:
         None
 
-    Function saves file with name "origin_dest_dateleave_datereturn_datetoday"
+    Function saves file with name "../cached/origin_dest_dateleave_datereturn.json"
 '''
-def cache_data(origin, dest, date_leave, date_return):
-    data = scrape_data(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return, return_df = False)
+def cache_data(data, origin, dest, date_leave, date_return):
+    #data = scrape_data(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return, return_df = False)
 
-    date_today = date.today().strftime('%Y%m%d')
-    date_leave = date_leave.replace('-', '')
-    date_return = date_return.replace('-', '')
-    file_name = '{}_{}_{}_{}_{}.json'.format(origin, dest, date_leave, date_return, date_today)
-
-    file = open(file_name, 'w')
+    file_name = make_filename(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
+    file = open('../cached/' + file_name, 'w')
     json.dump(data, file)
+
     file.close()
 
     print('%s created' % file_name)
 
+def load_cached(origin, dest, date_leave, date_return):
+    return json.load(open('../cached/' + make_filename(origin, dest, date_leave, date_return), 'r'))
 
 '''
     Scrapes data from Google Flights using Selenium. Cleans, filters data and returns as pandas dataframe or dictionary.
@@ -59,17 +59,58 @@ def cache_data(origin, dest, date_leave, date_return):
     Returns:
         pandas df or dictionary of columns
 '''
-def scrape_data(origin, dest, date_leave, date_return, return_df = True):
-    url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
-    results = get_results(url)
+def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache = False):
+    data = None
 
-    flight_info = get_info(results)
-    partition = partition_info(flight_info)
-    data = parse_columns(partition)
+    if make_filename(origin, dest, date_leave, date_return) in os.listdir('../cached/'):
+        data = load_cached(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
+        if date.today().strftime('%Y-%m-%d') not in data['Access Date']:
+            url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
+            results = get_results(url)
+
+            flight_info = get_info(results)
+            partition = partition_info(flight_info)
+            new_data = parse_columns(partition)
+
+            for i in range(len(data.keys())):
+                data[data.keys()[i]] += new_data[data.keys()[i]]
+
+            print('Updated cache')
+
+        else:
+            print('Pulled from cache')
+
+    else:
+        url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
+        results = get_results(url)
+
+        flight_info = get_info(results)
+        partition = partition_info(flight_info)
+        data = parse_columns(partition)
+
+    if cache:
+        cache_data(data, origin, dest, date_leave, date_return)
 
     if return_df:
         return pd.DataFrame(data)
     return data
+
+'''
+    Construct file name for caching
+
+    Args:
+        origin : Airport code of origin
+        dest : Airport code of destination
+        date_leave : Date of departure
+        date_return : Date or return
+
+    Returns:
+        Filename of format "origin_dest_dateleave_datereturn.json"
+'''
+def make_filename(origin, dest, date_leave, date_return):
+    date_leave = date_leave.replace('-', '')
+    date_return = date_return.replace('-', '')
+    return '{}_{}_{}_{}.json'.format(origin, dest, date_leave, date_return)
 
 '''
     Using Google's query format to access the appropriate Google flights page.
@@ -211,6 +252,7 @@ def parse_columns(grouped):
     emission = []
     price = []
     trip_type = []
+    access_date = [date.today().strftime('%Y-%m-%d')]*len(grouped)
 
     for g in grouped:
         depart_time += [g[0]]
@@ -248,6 +290,7 @@ def parse_columns(grouped):
         'CO2 Emission' : co2_emission,
         'Emission Avg Diff (%)' : emission,
         'Price ($)' : price,
-        'Trip Type' : trip_type
+        'Trip Type' : trip_type,
+        'Access Date' : access_date
     }
 

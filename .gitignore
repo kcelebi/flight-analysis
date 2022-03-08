@@ -2,3 +2,5 @@ nb/
 __pycache__/
 # Jupyter Notebook
 .ipynb_checkpoints
+
+cached/
