@@ -8,14 +8,22 @@
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from datetime import date
+from datetime import date, datetime, timedelta
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 import json
 import os
 
 
-__all__  = ['scrape_data', 'make_url', 'cache_data']
+__all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching']
+
+
+'''
+***********************************************
+##################  CACHING  ##################
+***********************************************
+'''
 
 '''
     Performs search and stores data into a JSON file for easy retrieval. 
@@ -41,10 +49,43 @@ def cache_data(data, origin, dest, date_leave, date_return):
 
     file.close()
 
-    print('%s created' % file_name)
+    #print('%s created' % file_name)
 
+'''
+    Load cached data.
+
+    Args:
+        origin : Airport code of origin
+        dest : Airport code of destination
+        date_leave : Date of departure
+        date_return : Date or return
+    
+    Returns:
+        Dictionary with column name as key and cleaned column as value loaded from cache.
+
+'''
 def load_cached(origin, dest, date_leave, date_return):
     return json.load(open('../cached/' + make_filename(origin, dest, date_leave, date_return), 'r'))
+
+
+def iterative_caching(origin, dest, date_leave, date_return, width):
+    date_format = '%Y-%m-%d'
+    for i in tqdm(range(-1*width, width)):
+        for j in range(-1*width, width):
+            d_leave = datetime.strftime(datetime.strptime(date_leave, date_format) + timedelta(i), date_format)
+            d_return = datetime.strftime(datetime.strptime(date_return, date_format) + timedelta(j), date_format)
+            try:
+                scrape_data(origin, dest, d_leave, d_return, cache = True, ret = False)
+            except:
+                print(origin, dest, d_leave, d_return)
+
+
+'''
+************************************************
+##################  SCRAPING  ##################
+************************************************
+'''
+
 
 '''
     Scrapes data from Google Flights using Selenium. Cleans, filters data and returns as pandas dataframe or dictionary.
@@ -59,7 +100,7 @@ def load_cached(origin, dest, date_leave, date_return):
     Returns:
         pandas df or dictionary of columns
 '''
-def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache = False):
+def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache = False, ret = True):
     data = None
 
     if make_filename(origin, dest, date_leave, date_return) in os.listdir('../cached/'):
@@ -76,9 +117,13 @@ def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache =
                 data[data.keys()[i]] += new_data[data.keys()[i]]
 
             print('Updated cache')
+            if not ret:
+                return
 
         else:
             print('Pulled from cache')
+            if not ret:
+                return
 
     else:
         url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
@@ -158,6 +203,14 @@ def get_results(url):
 
     driver.quit()
     return results
+
+
+'''
+************************************************
+##################  CLEANING  ##################
+************************************************
+'''
+
 
 '''
     Takes results from Selenium XPATH query and filters out unnecessary information.
