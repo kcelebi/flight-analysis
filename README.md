@@ -15,7 +15,10 @@ Flight price calculation can either use newly scraped data (scrapes upon running
 
 ## To Do
 
-- [ ] Go through initial code and grab scraping tools
+- [ ] Scrape data and clean it
+- [ ] Testing for scraping
+- [ ] Algorithm to check over multiple days and return summary
+- [ ] Determine caching method: wait for request and cache? periodically cache?
 - [ ] Model for observing change in flight price
 	- Predict how much it'll maybe change
 - [ ] UI for showing flights that are 'perfect' to constraint / flights that are close to constraints, etc
