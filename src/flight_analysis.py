@@ -8,16 +8,58 @@
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-
+from datetime import date
 import numpy as np
 import pandas as pd
+import json
 
-import matplotlib.pyplot as plt
+
+__all__  = ['scrape_data', 'make_url', 'cache_data']
+
+'''
+    Performs search and stores data into a JSON file for easy retrieval. 
+    Keys are origin, destination, date leave and return, and date accessed.
+
+    Args:
+        origin : Airport code of origin
+        dest : Airport code of destination
+        date_leave : Date of departure
+        date_return : Date or return
+
+    Returns:
+        None
+
+    Function saves file with name "origin_dest_dateleave_datereturn_datetoday"
+'''
+def cache_data(origin, dest, date_leave, date_return):
+    data = scrape_data(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return, return_df = False)
+
+    date_today = date.today().strftime('%Y%m%d')
+    date_leave = date_leave.replace('-', '')
+    date_return = date_return.replace('-', '')
+    file_name = '{}_{}_{}_{}_{}.json'.format(origin, dest, date_leave, date_return, date_today)
+
+    file = open(file_name, 'w')
+    json.dump(data, file)
+    file.close()
+
+    print('%s created' % file_name)
 
 
-__all__  = ['scrape_data']
+'''
+    Scrapes data from Google Flights using Selenium. Cleans, filters data and returns as pandas dataframe or dictionary.
 
-def scrape_data(origin, dest, date_leave, date_return):
+    Args:
+        origin : Airport code of origin
+        dest : Airport code of destination
+        date_leave : Date of departure
+        date_return : Date or return
+        return_df : Whether to return as pandas df or dictionary
+
+    Returns:
+        pandas df or dictionary of columns
+'''
+def scrape_data(origin, dest, date_leave, date_return, return_df = True):
     url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
     results = get_results(url)
 
@@ -25,24 +67,66 @@ def scrape_data(origin, dest, date_leave, date_return):
     partition = partition_info(flight_info)
     data = parse_columns(partition)
 
-    return pd.DataFrame(data)
+    if return_df:
+        return pd.DataFrame(data)
+    return data
 
+'''
+    Using Google's query format to access the appropriate Google flights page.
 
+    Args:
+        origin : Airport code of origin
+        dest : Airport code of destination
+        date_leave : Date of departure
+        date_return : Date or return
+
+    Returns:
+        URL string of appropriate Google Flights page.
+'''
 def make_url(origin, dest, date_leave, date_return):
     base = 'https://www.google.com/travel/flights?q=Flights%20to%20{}%20from%20{}%20on%20{}%20through%20{}'
     return base.format(dest, origin, date_leave, date_return)
 
+'''
+    Given Selenium driver, locates flight information by XPATH query.
+
+    Args:
+        d : Selenium driver object
+
+    Returns:
+        1D Array of results with flight information and some superfluous information (hotels, links, etc).
+'''
 def get_flight_elements(d):
     return d.find_element(by = By.XPATH, value = '//body[@id = "yDmH0d"]').text.split('\n')
 
+'''
+    Uses Selenium to access Google Flights and grab results.
+
+    Args:
+        url : URL string of Google Flights page
+
+    Returns:
+        1D Array of results with flight information and some superfluous information (hotels, links, etc).
+'''
 def get_results(url):
     driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
     driver.get(url)
+
     WebDriverWait(driver, timeout = 10).until(lambda d: len(get_flight_elements(d)) > 100)
     results = get_flight_elements(driver)
+
     driver.quit()
     return results
 
+'''
+    Takes results from Selenium XPATH query and filters out unnecessary information.
+
+    Args:
+        res : 1D Array of results with flight information and some superfluous information
+
+    Returns:
+        1D Array of results with only flight information, unpartitioned.
+'''
 def get_info(res):
     info = []
     collect = False
@@ -59,6 +143,9 @@ def get_info(res):
             
     return info
 
+'''
+    Boolean helper function for partition_info(). Determines where flight info observation begins/ends.
+'''
 def end_condition(x):
     if x[-2] == '+':
         x = x[:-2]
@@ -67,6 +154,19 @@ def end_condition(x):
         return True
     return False
 
+
+'''
+    Partitions results from get_info() into flight observations. Uses end_condition() to know
+    when to start/stop a new obsevation.
+
+    Args:
+        info : 1D Array of results with only flight information, unpartitioned.
+
+    Returns:
+        2D matrix of flight information where each observation is a 10 or 11 sized array. 
+        Each observation is size 10 if nonstop flight and size 11 if multiple stops (additional
+        feature is stop location(s)).
+'''
 def partition_info(info):
     i=0
     grouped = []
@@ -87,7 +187,16 @@ def partition_info(info):
         
     return grouped
 
+'''
+    Takes partitioned information and cleans data, conforming to appropriate type and setting up
+    for conversion to a pandas dataframe.
 
+    Args:
+        grouped : partitioned flight information in 2D matrix
+
+    Returns:
+        Dictionary with column name as key and cleaned column as value.
+'''
 def parse_columns(grouped):
     depart_time = []
     arrival_time = []
