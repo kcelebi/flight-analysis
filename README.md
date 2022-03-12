@@ -18,6 +18,7 @@ Flight price calculation can either use newly scraped data (scrapes upon running
 - [x] Scrape data and clean it
 - [x] Testing for scraping
 - [x] Add scraping docs
+- [ ] Support for Day of booking!! ("Delayed by x hr")
 - [ ] Detail most common airports and automatically cache
 - [ ] Algorithm to check over multiple days and return summary
 - [ ] Determine caching method: wait for request and cache? periodically cache?

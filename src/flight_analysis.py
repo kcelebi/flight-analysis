@@ -40,11 +40,12 @@ __all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching']
 
     Function saves file with name "../cached/origin_dest_dateleave_datereturn.json"
 '''
-def cache_data(data, origin, dest, date_leave, date_return):
+def cache_data(data, origin, dest):
     #data = scrape_data(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return, return_df = False)
 
-    file_name = make_filename(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
+    file_name = make_filename(origin = origin, dest = dest)
     file = open('../cached/' + file_name, 'w')
+
     json.dump(data, file)
 
     file.close()
@@ -57,15 +58,16 @@ def cache_data(data, origin, dest, date_leave, date_return):
     Args:
         origin : Airport code of origin
         dest : Airport code of destination
-        date_leave : Date of departure
-        date_return : Date or return
     
     Returns:
         Dictionary with column name as key and cleaned column as value loaded from cache.
 
 '''
-def load_cached(origin, dest, date_leave, date_return):
-    return json.load(open('../cached/' + make_filename(origin, dest, date_leave, date_return), 'r'))
+def load_cached(origin, dest, return_df = True):
+    file = open('../cached/' + make_filename(origin, dest), 'r')
+    data = json.load(file)
+    file.close()
+    return data
 
 
 def iterative_caching(origin, dest, date_leave, date_return, width):
@@ -75,9 +77,27 @@ def iterative_caching(origin, dest, date_leave, date_return, width):
             d_leave = datetime.strftime(datetime.strptime(date_leave, date_format) + timedelta(i), date_format)
             d_return = datetime.strftime(datetime.strptime(date_return, date_format) + timedelta(j), date_format)
             try:
-                scrape_data(origin, dest, d_leave, d_return, cache = True, ret = False)
+               scrape_data(origin, dest, d_leave, d_return, cache = True, ret = False)
             except:
                 print(origin, dest, d_leave, d_return)
+            #scrape_data(origin, dest, d_leave, d_return, cache = True, ret = False)
+
+
+
+def clean_cache():
+    for file in tqdm(os.listdir('../cached/')):
+        if file[-4:] == 'json':
+            f = open('../cached/' + file, 'r')
+            data = json.load(f)
+            f.close()
+
+            data = pd.DataFrame(data).drop_duplicates().to_dict()
+            f = open('../cached/' + file, 'w')
+            json.dump(data, f)
+            f.close()
+
+
+
 
 
 '''
@@ -103,27 +123,25 @@ def iterative_caching(origin, dest, date_leave, date_return, width):
 def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache = False, ret = True):
     data = None
 
-    if make_filename(origin, dest, date_leave, date_return) in os.listdir('../cached/'):
-        data = load_cached(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
-        if date.today().strftime('%Y-%m-%d') not in data['Access Date']:
+    if make_filename(origin, dest) in os.listdir('../cached/'):
+        data = load_cached(origin = origin, dest = dest)
+        df = pd.DataFrame(data)
+
+        if df[(df['Leave Date'] == date_leave) & (df['Return Date'] == date_return)].empty or date.today().strftime('%Y-%m-%d') not in data['Access Date']:
             url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
             results = get_results(url)
 
             flight_info = get_info(results)
             partition = partition_info(flight_info)
-            new_data = parse_columns(partition)
+            new_data = parse_columns(partition, date_leave, date_return)
 
             for i in range(len(data.keys())):
-                data[data.keys()[i]] += new_data[data.keys()[i]]
+                data[list(data.keys())[i]] += new_data[list(data.keys())[i]]
 
-            print('Updated cache')
-            if not ret:
-                return
+            #print('Updated cache')
 
         else:
             print('Pulled from cache')
-            if not ret:
-                return
 
     else:
         url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
@@ -131,13 +149,16 @@ def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache =
 
         flight_info = get_info(results)
         partition = partition_info(flight_info)
-        data = parse_columns(partition)
+        data = parse_columns(partition, date_leave, date_return)
 
     if cache:
-        cache_data(data, origin, dest, date_leave, date_return)
+        cache_data(data, origin, dest)
+
+    if not ret:
+        return
 
     if return_df:
-        return pd.DataFrame(data)
+        return pd.DataFrame(data).drop_duplicates()
     return data
 
 '''
@@ -152,10 +173,10 @@ def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache =
     Returns:
         Filename of format "origin_dest_dateleave_datereturn.json"
 '''
-def make_filename(origin, dest, date_leave, date_return):
-    date_leave = date_leave.replace('-', '')
-    date_return = date_return.replace('-', '')
-    return '{}_{}_{}_{}.json'.format(origin, dest, date_leave, date_return)
+def make_filename(origin, dest):
+    #date_leave = date_leave.replace('-', '')
+    #date_return = date_return.replace('-', '')
+    return '{}_{}.json'.format(origin, dest)
 
 '''
     Using Google's query format to access the appropriate Google flights page.
@@ -194,12 +215,26 @@ def get_flight_elements(d):
     Returns:
         1D Array of results with flight information and some superfluous information (hotels, links, etc).
 '''
-def get_results(url):
+def get_results(url: str) -> list[str]:
     driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
     driver.get(url)
 
     WebDriverWait(driver, timeout = 10).until(lambda d: len(get_flight_elements(d)) > 100)
     results = get_flight_elements(driver)
+
+    driver.quit()
+    return results
+
+
+def get_results(url: list[str]) -> list[str]:
+    driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
+
+    results = []
+    for u in url:
+        driver.get(u)
+
+        WebDriverWait(driver, timeout = 10).until(lambda d: len(get_flight_elements(d)) > 100)
+        results += [get_flight_elements(driver)]
 
     driver.quit()
     return results
@@ -291,7 +326,7 @@ def partition_info(info):
     Returns:
         Dictionary with column name as key and cleaned column as value.
 '''
-def parse_columns(grouped):
+def parse_columns(grouped, date_leave, date_return):
     depart_time = []
     arrival_time = []
     airline = []
@@ -331,8 +366,10 @@ def parse_columns(grouped):
         trip_type += [g[9 + i_diff]]
     
     return {
-        'Depart Time' : depart_time,
-        'Arrival Time' : arrival_time,
+        'Leave Date' : [date_leave]*len(grouped),
+        'Return Date' : [date_return]*len(grouped),
+        'Depart Time (Leg 1)' : depart_time,
+        'Arrival Time (Leg 1)' : arrival_time,
         'Airline(s)' : airline,
         'Travel Time' : travel_time,
         'Origin' : origin,
