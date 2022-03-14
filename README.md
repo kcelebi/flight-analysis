@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/kcelebi/Flight_Analysis.svg?branch=main)](https://travis-ci.org/kcelebi/Flight_Analysis)
+[![Gitter](https://badges.gitter.im/Flight_Analysis/community.svg)](https://gitter.im/Flight_Analysis/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 # Flight Price Analysis
 
 Uses selenium and Python to scrape Google Flights data for analysis. One can use this repo to find the best flights according to some constraints (date, location, price min/max). One can also use this repo for general analysis regarding flights.

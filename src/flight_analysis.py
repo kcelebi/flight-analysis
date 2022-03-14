@@ -64,18 +64,18 @@ def cache_data(data : dict, origin : str, dest : str) -> None:
         Dictionary with column name as key and cleaned column as value loaded from cache.
 
 '''
-def load_cached(origin : str, dest : str, return_df : bool = True):
+def load_cached(origin : str, dest : str, return_df : bool = True) -> dict:
     file = open('../cached/' + make_filename(origin, dest), 'r')
     data = json.load(file)
     file.close()
     return pd.DataFrame(data) if return_df else data
 
 
-def iterative_caching(origin, dest, date_leave, date_return, width):
+def iterative_caching(origin : str, dest : str, date_leave : str, date_return : str, width : int) -> None:
     date_format = '%Y-%m-%d'
     d_leave_ = []
     d_return_ = []
-    for i in tqdm(range(-1*width, width)):
+    for i in tqdm(range(-1*width, width), desc = 'Make URLs'):
         for j in range(-1*width, width):
             d_leave = datetime.strftime(datetime.strptime(date_leave, date_format) + timedelta(i), date_format)
             d_return = datetime.strftime(datetime.strptime(date_return, date_format) + timedelta(j), date_format)
@@ -87,8 +87,10 @@ def iterative_caching(origin, dest, date_leave, date_return, width):
     scrape_data(origin, dest, d_leave_, d_return_, cache = True)
 
 
-
-def clean_cache():
+'''
+    Clean duplicate observations in cached data.
+'''
+def clean_cache() -> None:
     for file in tqdm(os.listdir('../cached/')):
         if file[-4:] == 'json':
             f = open('../cached/' + file, 'r')
@@ -260,7 +262,7 @@ def get_results(url, date_leave, date_return):
         driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
 
         results = []
-        for u in tqdm(url):
+        for u in tqdm(url, desc = 'Data Scrape'):
             driver.get(u)
 
             WebDriverWait(driver, timeout = 30).until(lambda d: len(get_flight_elements(d)) > 100)
@@ -288,7 +290,7 @@ def get_results(url, date_leave, date_return):
         }
 
         for i, res in enumerate(results):
-            try:
+            '''try:
                 flight_info = get_info(res)
                 partition = partition_info(flight_info)
                 new_data = parse_columns(partition, date_leave[i], date_return[i])
@@ -296,7 +298,13 @@ def get_results(url, date_leave, date_return):
                 for key in df.keys():
                     df[key] += new_data[key]
             except:
-                print(date_leave[i], date_return[i])
+                print(date_leave[i], date_return[i])'''
+            flight_info = get_info(res)
+            partition = partition_info(flight_info)
+            new_data = parse_columns(partition, date_leave[i], date_return[i])
+
+            for key in df.keys():
+                df[key] += new_data[key]
 
         return df
 
@@ -338,6 +346,9 @@ def get_info(res):
     Boolean helper function for partition_info(). Determines where flight info observation begins/ends.
 '''
 def end_condition(x):
+    if len(x) < 2:
+        return False
+
     if x[-2] == '+':
         x = x[:-2]
     
@@ -368,7 +379,7 @@ def partition_info(info):
             if end_condition(info[j]):
                 end = j
                 break
-            j +=1 
+            j += 1 
 
         #print(i, end)
         if end == -1:
@@ -405,27 +416,39 @@ def parse_columns(grouped, date_leave, date_return):
     access_date = [date.today().strftime('%Y-%m-%d')]*len(grouped)
 
     for g in grouped:
+        i_diff = 0
+
         depart_time += [g[0]]
         arrival_time += [g[1]]
-        airline += [g[2]]
-        travel_time += [g[3]]
-        origin += [g[4].split('–')[0]]
-        dest += [g[4].split('–')[1]]
+
+        i_diff += 1 if 'Separate tickets booked together' in g[2] else 0
+
+        airline += [g[2 + i_diff]]
+        travel_time += [g[3 + i_diff]]
+        origin += [g[4 + i_diff].split('–')[0]]
+        dest += [g[4 + i_diff].split('–')[1]]
         
-        num_stops = 0 if 'Nonstop' in g[5] else int(g[5].split('stop')[0])
+        num_stops = 0 if 'Nonstop' in g[5 + i_diff] else int(g[5 + i_diff].split('stop')[0])
         stops += [num_stops]
 
-        stop_time += [None if num_stops == 0 else (g[6].split('min')[0] if num_stops == 1 else None)]
-        stop_location += [None if num_stops == 0 else (g[6].split('min')[1] if num_stops == 1 and 'min' in g[6] else [g[6].split('hr')[1] if 'hr' in g[6] and num_stops == 1 else g[6]])]
+        stop_time += [None if num_stops == 0 else (g[6 + i_diff].split('min')[0] if num_stops == 1 else None)]
+        stop_location += [None if num_stops == 0 else (g[6 + i_diff].split('min')[1] if num_stops == 1 and 'min' in g[6 + i_diff] else [g[6 + i_diff].split('hr')[1] if 'hr' in g[6 + i_diff] and num_stops == 1 else g[6 + i_diff]])]
         
-        i_diff = 0 if num_stops == 0 else 1
-        
-        co2_emission += [float(g[6 + i_diff].replace(',','').split(' kg')[0])]
-        emission += [0 if g[7 + i_diff] == 'Avg emissions' else int(g[7 + i_diff].split('%')[0])]
-        
-        price += [float(g[8 + i_diff][1:].replace(',',''))]
-        
-        trip_type += [g[9 + i_diff]]
+        i_diff += 0 if num_stops == 0 else 1
+
+        if g[6 + i_diff] != '–':
+            co2_emission += [float(g[6 + i_diff].replace(',','').split(' kg')[0])]
+            emission += [0 if g[7 + i_diff] == 'Avg emissions' else int(g[7 + i_diff].split('%')[0])]
+
+            price += [float(g[8 + i_diff][1:].replace(',',''))]
+            trip_type += [g[9 + i_diff]]
+        else:
+            co2_emission += [None]
+            emission += [None]
+            price += [float(g[7 + i_diff][1:].replace(',',''))]
+            trip_type += [g[8 + i_diff]]
+
+       
     
     return {
         'Leave Date' : [date_leave]*len(grouped),
