@@ -17,7 +17,7 @@ import json
 import os
 
 
-__all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching', 'load_cached']
+__all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching', 'load_cached', 'clean_cache']
 
 
 '''
@@ -42,16 +42,22 @@ __all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching', 'load_
     Function saves file with name "../cached/origin_dest_dateleave_datereturn.json"
 '''
 def cache_data(data : dict, origin : str, dest : str) -> None:
-    #data = scrape_data(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return, return_df = False)
-
     file_name = make_filename(origin = origin, dest = dest)
+
+    if file_name in os.listdir('../cached'):
+        old_data = load_cached(origin = origin, dest = dest, return_df = False)
+
+        for key in old_data.keys():
+            old_data[key] += data[key]
+
+        data = old_data
+
     file = open('../cached/' + file_name, 'w')
 
     json.dump(data, file)
 
     file.close()
 
-    #print('%s created' % file_name)
 
 '''
     Load cached data.
@@ -64,7 +70,7 @@ def cache_data(data : dict, origin : str, dest : str) -> None:
         Dictionary with column name as key and cleaned column as value loaded from cache.
 
 '''
-def load_cached(origin : str, dest : str, return_df : bool = True) -> dict:
+def load_cached(origin : str, dest : str, return_df : bool = False):
     file = open('../cached/' + make_filename(origin, dest), 'r')
     data = json.load(file)
     file.close()
@@ -98,7 +104,7 @@ def iterative_caching(origin : str, dest : str, date_leave : str, date_return : 
             d_return_ += [d_return]
 
 
-    scrape_data(origin, dest, d_leave_, d_return_, cache = True)
+    scrape_data(origin = origin, dest = dest, date_leave = d_leave_, date_return  = d_return_, cache = True)
 
 
 '''
@@ -117,6 +123,53 @@ def clean_cache() -> None:
             f.close()
 
 
+def cache_condition(df : pd.DataFrame, date_leave : str, date_return : str) -> bool:
+    today_date = date.today().strftime('%Y-%m-%d')
+
+    if today_date not in df['Access Date']:
+        return False
+
+    if df[(df['Leave Date'] == date_leave) & (df['Return Date'] == date_return)].empty:
+        return False
+
+    return True
+
+'''
+    Check whether a given request has been cached or not.
+'''
+@overload
+def check_cached(origin : str, dest : str, date_leave : str, date_return : str) -> bool:
+    ...
+
+@overload
+def check_cached(origin : str, dest : str, date_leave : list, date_return : list) -> list:
+    ...
+
+'''
+    Overloaded check_cached function. Either checks condition for one or 
+    a list of requests.
+'''
+def check_cached(origin : str, dest : str, date_leave, date_return):
+    '''
+        Checking by filename
+    '''
+    file_name = make_filename(origin = origin, dest = dest)
+    df = load_cached(origin = origin, dest = dest, return_df = True)
+
+    if file_name not in os.listdir('../cached/'):
+        return False
+
+    '''
+        Checking only one request
+    '''
+    if isinstance(date_leave, str) and isinstance(date_return, str):
+        return cache_condition(df = df, date_leave = date_leave, date_return = date_return)
+
+    '''
+        Checking all requests
+    '''
+    if isinstance(date_leave, list) and isinstance(date_return, list):
+        return [cache_condition(df = df, date_leave = date_leave[i], date_return = date_return[i]) for i in range(len(date_leave))]
 
 
 
@@ -183,14 +236,14 @@ def scrape_data(origin, dest, date_leave, date_return, cache = False) -> dict:
     '''
     if isinstance(date_leave, list) and isinstance(date_return, list):
         # Construct list of urls
-        url = [make_url(origin, dest, date_leave[i], date_return[i]) for i in range(len(date_leave))]
+        url = [make_url(origin = origin, dest = dest, date_leave = date_leave[i], date_return = date_return[i]) for i in range(len(date_leave))]
         
         # Get the data of urls
-        data = get_results(url, date_leave, date_return)
+        data = get_results(url = url, origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
 
         # Cache them
         if cache:
-            cache_data(data, origin, dest)
+            cache_data(data = data, origin = origin, dest = dest)
 
         return data
 
@@ -199,18 +252,16 @@ def scrape_data(origin, dest, date_leave, date_return, cache = False) -> dict:
     '''
     if isinstance(date_leave, str) and isinstance(date_return, str):
         # Construct one url
-        url = make_url(origin, dest, date_leave, date_return)
+        url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
 
         # Get the data
-        data = get_results(url, date_leave, date_return)
+        data = get_results(url = url, origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
 
         # Cache it
         if cache:
-            cache_data(data, origin, dest)
+            cache_data(data = data, origin = origin, dest = dest)
 
         return data
-
-
 
 '''
     Construct file name for caching
@@ -256,6 +307,51 @@ def get_flight_elements(d) -> list:
     return d.find_element(by = By.XPATH, value = '//body[@id = "yDmH0d"]').text.split('\n')
 
 '''
+    Make URL request to Google Flights and collect info using XPATH query.
+
+    Args:
+        url : URL to make request designed for given origin and destination
+
+    Returns:
+        XPATH query result
+'''
+def make_url_request(url : str) -> list:
+    ...
+
+def make_url_request(url : list) -> list:
+    ...
+
+def make_url_request(url):
+    if isinstance(url, str):
+        # Instantiate driver and get raw data
+        driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
+        driver.get(url)
+
+        # Waiting and initial XPATH cleaning
+        WebDriverWait(driver, timeout = 10).until(lambda d: len(get_flight_elements(d)) > 100)
+        results = get_flight_elements(driver)
+
+        driver.quit()
+
+    if isinstance(url, list):
+        # Instantiate driver
+        driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
+
+        # Begin getting results for each url
+        results = []
+        for u in tqdm(url, desc = 'Data Scrape'):
+            driver.get(u)
+
+            try:
+                WebDriverWait(driver, timeout = 30).until(lambda d: len(get_flight_elements(d)) > 100)
+                results += [get_flight_elements(driver)]
+            except:
+                print('Timeout exception')
+
+        driver.quit()
+
+    return results
+'''
     Uses Selenium to access Google Flights and grab results.
 
     Args:
@@ -275,43 +371,32 @@ def get_results(url: list) -> list:
 '''
     Overloaded get_results function. Returns result for list of urls or single url.
 '''
-def get_results(url, date_leave, date_return):
+def get_results(url, origin, dest, date_leave, date_return):
     '''
         Return results for single url
     '''
     if isinstance(url, str) and isinstance(date_leave, str) and isinstance(date_return, str):
-        # Instantiate driver and get raw data
-        driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
-        driver.get(url)
 
-        # Waiting and initial XPATH cleaning
-        WebDriverWait(driver, timeout = 10).until(lambda d: len(get_flight_elements(d)) > 100)
-        results = get_flight_elements(driver)
+        if check_cached(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return):
+            return load_cached(origin = origin, dest = dest)
+        else:
+            # Make URL request
+            results = make_url_request(url = url)
 
-        driver.quit()
+            # Data cleaning
+            flight_info = get_info(results) # First, get relevant results
+            partition = partition_info(flight_info) # Partition list into "flights"
 
-        # Data cleaning
-        flight_info = get_info(results) # First, get relevant results
-        partition = partition_info(flight_info) # Partition list into "flights"
-
-        return parse_columns(partition, date_leave, date_return) # "Transpose" to data frame
+            return parse_columns(partition, date_leave, date_return) # "Transpose" to data frame
 
     '''
         Return results for list of urls
     '''
     if isinstance(url, list) and isinstance(date_leave, list) and isinstance(date_return, list):
-        # Instantiate driver
-        driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
+        if check_cached(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return):
+            return load_cached(origin = origin, dest = dest)
 
-        # Begin getting results for each url
-        results = []
-        for u in tqdm(url, desc = 'Data Scrape'):
-            driver.get(u)
-
-            WebDriverWait(driver, timeout = 30).until(lambda d: len(get_flight_elements(d)) > 100)
-            results += [get_flight_elements(driver)]
-
-        driver.quit()
+        results = make_url_request(origin = origin, dest = dest)
 
         # Blank data frame to append results to.
         df = {
