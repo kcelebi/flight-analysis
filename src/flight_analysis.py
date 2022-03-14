@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from datetime import date, datetime, timedelta
+from typing import overload
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -16,7 +17,7 @@ import json
 import os
 
 
-__all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching']
+__all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching', 'load_cached']
 
 
 '''
@@ -40,7 +41,7 @@ __all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching']
 
     Function saves file with name "../cached/origin_dest_dateleave_datereturn.json"
 '''
-def cache_data(data, origin, dest):
+def cache_data(data : dict, origin : str, dest : str) -> None:
     #data = scrape_data(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return, return_df = False)
 
     file_name = make_filename(origin = origin, dest = dest)
@@ -63,24 +64,27 @@ def cache_data(data, origin, dest):
         Dictionary with column name as key and cleaned column as value loaded from cache.
 
 '''
-def load_cached(origin, dest, return_df = True):
+def load_cached(origin : str, dest : str, return_df : bool = True):
     file = open('../cached/' + make_filename(origin, dest), 'r')
     data = json.load(file)
     file.close()
-    return data
+    return pd.DataFrame(data) if return_df else data
 
 
 def iterative_caching(origin, dest, date_leave, date_return, width):
     date_format = '%Y-%m-%d'
+    d_leave_ = []
+    d_return_ = []
     for i in tqdm(range(-1*width, width)):
         for j in range(-1*width, width):
             d_leave = datetime.strftime(datetime.strptime(date_leave, date_format) + timedelta(i), date_format)
             d_return = datetime.strftime(datetime.strptime(date_return, date_format) + timedelta(j), date_format)
-            try:
-               scrape_data(origin, dest, d_leave, d_return, cache = True, ret = False)
-            except:
-                print(origin, dest, d_leave, d_return)
-            #scrape_data(origin, dest, d_leave, d_return, cache = True, ret = False)
+
+            d_leave_ += [d_leave]
+            d_return_ += [d_return]
+
+
+    scrape_data(origin, dest, d_leave_, d_return_, cache = True)
 
 
 
@@ -120,46 +124,63 @@ def clean_cache():
     Returns:
         pandas df or dictionary of columns
 '''
-def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache = False, ret = True):
-    data = None
+@overload
+def scrape_data(origin : str, dest : str, date_leave : str, date_return : str, cache : bool = False):
+    ...
+    '''data = None
 
+    # if request has already been cached
     if make_filename(origin, dest) in os.listdir('../cached/'):
         data = load_cached(origin = origin, dest = dest)
         df = pd.DataFrame(data)
 
+        # check that date + access date haven't been recorded, if so then scape it from website
+        # otherwise, just load the dataframe from cache
         if df[(df['Leave Date'] == date_leave) & (df['Return Date'] == date_return)].empty or date.today().strftime('%Y-%m-%d') not in data['Access Date']:
             url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
-            results = get_results(url)
-
-            flight_info = get_info(results)
-            partition = partition_info(flight_info)
-            new_data = parse_columns(partition, date_leave, date_return)
+            new_data = get_results(url)
 
             for i in range(len(data.keys())):
                 data[list(data.keys())[i]] += new_data[list(data.keys())[i]]
 
-            #print('Updated cache')
-
         else:
             print('Pulled from cache')
 
-    else:
+    else: #new, unseen request
         url = make_url(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return)
-        results = get_results(url)
-
-        flight_info = get_info(results)
-        partition = partition_info(flight_info)
-        data = parse_columns(partition, date_leave, date_return)
+        data = get_results(url)
 
     if cache:
         cache_data(data, origin, dest)
 
-    if not ret:
-        return
+    return data'''
 
-    if return_df:
-        return pd.DataFrame(data).drop_duplicates()
-    return data
+@overload
+def scrape_data(origin : str, dest : str, date_leave : list, date_return : list, cache : bool = False) -> dict:
+    ...
+
+def scrape_data(origin, dest, date_leave, date_return, cache = False):
+    if isinstance(date_leave, list) and isinstance(date_return, list):
+        url = [make_url(origin, dest, date_leave[i], date_return[i]) for i in range(len(date_leave))]
+    
+        data = get_results(url, date_leave, date_return)
+
+        if cache:
+            cache_data(data, origin, dest)
+
+        return data
+
+    if isinstance(date_leave, str) and isinstance(date_return, str):
+        url = make_url(origin, dest, date_leave, date_return)
+
+        data = get_results(url, date_leave, date_return)
+
+        if cache:
+            cache_data(data, origin, dest)
+
+        return data
+
+
 
 '''
     Construct file name for caching
@@ -173,9 +194,7 @@ def scrape_data(origin, dest, date_leave, date_return, return_df = True, cache =
     Returns:
         Filename of format "origin_dest_dateleave_datereturn.json"
 '''
-def make_filename(origin, dest):
-    #date_leave = date_leave.replace('-', '')
-    #date_return = date_return.replace('-', '')
+def make_filename(origin : str, dest : str) -> str:
     return '{}_{}.json'.format(origin, dest)
 
 '''
@@ -190,7 +209,7 @@ def make_filename(origin, dest):
     Returns:
         URL string of appropriate Google Flights page.
 '''
-def make_url(origin, dest, date_leave, date_return):
+def make_url(origin : str, dest : str, date_leave : str, date_return : str) -> str:
     base = 'https://www.google.com/travel/flights?q=Flights%20to%20{}%20from%20{}%20on%20{}%20through%20{}'
     return base.format(dest, origin, date_leave, date_return)
 
@@ -215,29 +234,72 @@ def get_flight_elements(d):
     Returns:
         1D Array of results with flight information and some superfluous information (hotels, links, etc).
 '''
-def get_results(url: str) -> list[str]:
-    driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
-    driver.get(url)
+@overload
+def get_results(url: str) -> list:
+    ...
 
-    WebDriverWait(driver, timeout = 10).until(lambda d: len(get_flight_elements(d)) > 100)
-    results = get_flight_elements(driver)
+@overload
+def get_results(url: list) -> list:
+    ...
 
-    driver.quit()
-    return results
-
-
-def get_results(url: list[str]) -> list[str]:
-    driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
-
-    results = []
-    for u in url:
-        driver.get(u)
+def get_results(url, date_leave, date_return):
+    if isinstance(url, str) and isinstance(date_leave, str) and isinstance(date_return, str):
+        driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
+        driver.get(url)
 
         WebDriverWait(driver, timeout = 10).until(lambda d: len(get_flight_elements(d)) > 100)
-        results += [get_flight_elements(driver)]
+        results = get_flight_elements(driver)
 
-    driver.quit()
-    return results
+        driver.quit()
+
+        flight_info = get_info(results)
+        partition = partition_info(flight_info)
+
+        return parse_columns(partition, date_leave, date_return)
+    if isinstance(url, list) and isinstance(date_leave, list) and isinstance(date_return, list):
+        driver = webdriver.Chrome('/Users/kayacelebi/Downloads/chromedriver')
+
+        results = []
+        for u in tqdm(url):
+            driver.get(u)
+
+            WebDriverWait(driver, timeout = 30).until(lambda d: len(get_flight_elements(d)) > 100)
+            results += [get_flight_elements(driver)]
+
+        driver.quit()
+
+        df = {
+            'Leave Date' : [],
+            'Return Date' : [],
+            'Depart Time (Leg 1)' : [],
+            'Arrival Time (Leg 1)' : [],
+            'Airline(s)' : [],
+            'Travel Time' : [],
+            'Origin' : [],
+            'Destination' : [],
+            'Num Stops' : [],
+            'Layover Time' : [],
+            'Stop Location' : [],
+            'CO2 Emission' : [],
+            'Emission Avg Diff (%)' : [],
+            'Price ($)' : [],
+            'Trip Type' : [],
+            'Access Date' : []
+        }
+
+        for i, res in enumerate(results):
+            try:
+                flight_info = get_info(res)
+                partition = partition_info(flight_info)
+                new_data = parse_columns(partition, date_leave[i], date_return[i])
+
+                for key in df.keys():
+                    df[key] += new_data[key]
+            except:
+                print(date_leave[i], date_return[i])
+
+        return df
+
 
 
 '''
@@ -354,7 +416,7 @@ def parse_columns(grouped, date_leave, date_return):
         stops += [num_stops]
 
         stop_time += [None if num_stops == 0 else (g[6].split('min')[0] if num_stops == 1 else None)]
-        stop_location += [None if num_stops == 0 else (g[6].split('min')[1] if num_stops == 1 else g[6])]
+        stop_location += [None if num_stops == 0 else (g[6].split('min')[1] if num_stops == 1 and 'min' in g[6] else [g[6].split('hr')[1] if 'hr' in g[6] and num_stops == 1 else g[6]])]
         
         i_diff = 0 if num_stops == 0 else 1
         
