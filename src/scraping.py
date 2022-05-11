@@ -47,8 +47,10 @@ def cache_data(data : dict, origin : str, dest : str) -> None:
     if file_name in os.listdir('../cached'):
         old_data = load_cached(origin = origin, dest = dest, return_df = False)
 
-        for key in old_data.keys():
-            old_data[key] += data[key]
+        for key in list(old_data.keys()):
+            last_index = int(list(old_data[key].keys())[-1]) + 1
+            for idx, val in enumerate(data[key]):
+                old_data[key][last_index + idx] = val
 
         data = old_data
 
@@ -103,7 +105,6 @@ def iterative_caching(origin : str, dest : str, date_leave : str, date_return : 
             d_leave_ += [d_leave]
             d_return_ += [d_return]
 
-
     scrape_data(origin = origin, dest = dest, date_leave = d_leave_, date_return  = d_return_, cache = True)
 
 
@@ -113,11 +114,9 @@ def iterative_caching(origin : str, dest : str, date_leave : str, date_return : 
 def clean_cache() -> None:
     for file in tqdm(os.listdir('../cached/')):
         if file[-4:] == 'json':
-            f = open('../cached/' + file, 'r')
-            data = json.load(f)
-            f.close()
+            df = load_cached(origin = file.split('_')[0], dest = file.split('_')[1][:-5], return_df = True)
 
-            data = pd.DataFrame(data).drop_duplicates().to_dict()
+            data = df.loc[df[['Leave Date', 'Return Date', 'Access Date', 'Depart Time (Leg 1)', 'Arrival Time (Leg 1)']].astype(str).drop_duplicates().index].to_dict()
             f = open('../cached/' + file, 'w')
             json.dump(data, f)
             f.close()
@@ -154,10 +153,10 @@ def check_cached(origin : str, dest : str, date_leave, date_return):
         Checking by filename
     '''
     file_name = make_filename(origin = origin, dest = dest)
-    df = load_cached(origin = origin, dest = dest, return_df = True)
-
     if file_name not in os.listdir('../cached/'):
         return False
+
+    df = load_cached(origin = origin, dest = dest, return_df = True)
 
     '''
         Checking only one request
@@ -262,6 +261,9 @@ def scrape_data(origin, dest, date_leave, date_return, cache = False) -> dict:
             cache_data(data = data, origin = origin, dest = dest)
 
         return data
+
+    else:
+        raise WrongTypeError('Incorrect types provided')
 
 '''
     Construct file name for caching
@@ -396,7 +398,7 @@ def get_results(url, origin, dest, date_leave, date_return):
         if check_cached(origin = origin, dest = dest, date_leave = date_leave, date_return = date_return):
             return load_cached(origin = origin, dest = dest)
 
-        results = make_url_request(origin = origin, dest = dest)
+        results = make_url_request(url = url)
 
         # Blank data frame to append results to.
         df = {
