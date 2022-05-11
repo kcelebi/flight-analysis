@@ -5,3 +5,5 @@ __pycache__/
 
 cached/
 .Rproj.user
+
+flight_analysis_app/
