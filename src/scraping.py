@@ -168,7 +168,7 @@ def check_cached(origin : str, dest : str, date_leave, date_return):
         Checking all requests
     '''
     if isinstance(date_leave, list) and isinstance(date_return, list):
-        return [cache_condition(df = df, date_leave = date_leave[i], date_return = date_return[i]) for i in range(len(date_leave))]
+        return np.all([cache_condition(df = df, date_leave = date_leave[i], date_return = date_return[i]) for i in range(len(date_leave))])
 
 
 
