@@ -39,12 +39,12 @@ __all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching', 'load_
     Returns:
         None
 
-    Function saves file with name "../cached/origin_dest_dateleave_datereturn.json"
+    Function saves file with name "../flight_analysis_app/cached/origin_dest_dateleave_datereturn.json"
 '''
 def cache_data(data : dict, origin : str, dest : str) -> None:
     file_name = make_filename(origin = origin, dest = dest)
 
-    if file_name in os.listdir('../cached'):
+    if file_name in os.listdir('../flight_analysis_app/cached'):
         old_data = load_cached(origin = origin, dest = dest, return_df = False)
 
         for key in list(old_data.keys()):
@@ -54,7 +54,7 @@ def cache_data(data : dict, origin : str, dest : str) -> None:
 
         data = old_data
 
-    file = open('../cached/' + file_name, 'w')
+    file = open('../flight_analysis_app/cached/' + file_name, 'w')
 
     json.dump(data, file)
 
@@ -73,7 +73,7 @@ def cache_data(data : dict, origin : str, dest : str) -> None:
 
 '''
 def load_cached(origin : str, dest : str, return_df : bool = False):
-    file = open('../cached/' + make_filename(origin, dest), 'r')
+    file = open('../flight_analysis_app/cached/' + make_filename(origin, dest), 'r')
     data = json.load(file)
     file.close()
     return pd.DataFrame(data) if return_df else data
@@ -112,12 +112,12 @@ def iterative_caching(origin : str, dest : str, date_leave : str, date_return : 
     Clean duplicate observations in cached data.
 '''
 def clean_cache() -> None:
-    for file in tqdm(os.listdir('../cached/')):
+    for file in tqdm(os.listdir('../flight_analysis_app/cached/')):
         if file[-4:] == 'json':
             df = load_cached(origin = file.split('_')[0], dest = file.split('_')[1][:-5], return_df = True)
 
             data = df.loc[df[['Leave Date', 'Return Date', 'Access Date', 'Depart Time (Leg 1)', 'Arrival Time (Leg 1)']].astype(str).drop_duplicates().index].to_dict()
-            f = open('../cached/' + file, 'w')
+            f = open('../flight_analysis_app/cached/' + file, 'w')
             json.dump(data, f)
             f.close()
 
@@ -153,7 +153,7 @@ def check_cached(origin : str, dest : str, date_leave, date_return):
         Checking by filename
     '''
     file_name = make_filename(origin = origin, dest = dest)
-    if file_name not in os.listdir('../cached/'):
+    if file_name not in os.listdir('../flight_analysis_app/cached/'):
         return False
 
     df = load_cached(origin = origin, dest = dest, return_df = True)
