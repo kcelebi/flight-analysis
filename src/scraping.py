@@ -102,8 +102,9 @@ def iterative_caching(origin : str, dest : str, date_leave : str, date_return : 
             d_leave = datetime.strftime(datetime.strptime(date_leave, date_format) + timedelta(i), date_format)
             d_return = datetime.strftime(datetime.strptime(date_return, date_format) + timedelta(j), date_format)
 
-            d_leave_ += [d_leave]
-            d_return_ += [d_return]
+            if d_leave < d_return:
+                d_leave_ += [d_leave]
+                d_return_ += [d_return]
 
     scrape_data(origin = origin, dest = dest, date_leave = d_leave_, date_return  = d_return_, cache = True)
 
