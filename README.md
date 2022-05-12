@@ -7,13 +7,37 @@ Uses selenium and Python to scrape Google Flights data for analysis. One can use
 
 ## Table of Contents
 - [Overview](#Overview)
-- [To Do](#to-do)
+- [Usage](#usage)
+- [Cache Data](#cache-data)
 - [Real Usage](#real-usage) 😄
 
 
 ## Overview
 
-Flight price calculation can either use newly scraped data (scrapes upon running it) or cached data that reports a price-change confidence determined by a trained model.
+Flight price calculation can either use newly scraped data (scrapes upon running it) or cached data that reports a price-change confidence determined by a trained model. Currently, many features of this application are in development. You can find updates and use some of the functionalities online [here](https://kayacelebi.shinyapps.io/flight_analysis_app/).
+
+## Usage
+
+The web scraping tool is currently functional only for scraping round trip flights for a given origin, destination, and date range. It can be easily used in a script or a jupyter notebook.
+
+Note that the following packages are **absolutely required** as dependencies:
+- tqdm
+- selenium (make sure to update your [chromedriver](https://chromedriver.chromium.org)!)
+- json
+
+The main scraping function that makes up the backbone of most other functionalities is `scrape_data`. Note that the `cache` parameter refers to whether this output should be saved in a caching system. See [caching](#cache-data).
+
+	# Parameter documentation
+	# scrape_data(origin : str, destination : str, date_leave : str, date_return : str, cache : bool = False) -> dict
+	# Try to keep the dates in format YYYY-mm-dd
+	
+	result = scrape_data('JFK', 'IST', '2022-05-20', '2022-06-10')
+	
+	# Can also input list of date strings for date_leave and date_return
+	
+	leave_dates = ['2022-05-20', '2022-05-21', '2022-05-22']
+	return_dates = ['2022-06-10', '2022-06-11', '2022-06-12']
+	range_result = scrape_data('JFK', 'IST', leave_dates, return_dates)
 
 
 <!--## To Do
