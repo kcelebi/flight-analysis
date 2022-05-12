@@ -39,6 +39,18 @@ The main scraping function that makes up the backbone of most other functionalit
 	return_dates = ['2022-06-10', '2022-06-11', '2022-06-12']
 	range_result = scrape_data('JFK', 'IST', leave_dates, return_dates)
 
+## Cache Data
+
+The caching system for this application is mainly designed to make the loading of data more efficient. For the moment, this component of the application hasn't been designed well for the public to easily use so I would suggest that most people leave it alone, or fork the repository and modify some of the functions to create folders in the destinations that they would prefer. The key caching functions are:
+
+- `cache_data`
+- `load_cached`
+- `iterative_caching`
+- `clean_cache`
+- `cache_condition`
+- `check_cached`
+
+All of these functions are clearly documented in the `scraping.py` file.
 
 <!--## To Do
 
