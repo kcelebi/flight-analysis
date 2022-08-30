@@ -1,14 +1,18 @@
-[![Build Status](https://travis-ci.org/kcelebi/Flight_Analysis.svg?branch=main)](https://travis-ci.org/kcelebi/Flight_Analysis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# Flight Price Analysis
+# Flight Analysis
 
-Uses selenium and Python to scrape Google Flights data for analysis. One can use this repo to find the best flights according to some constraints (date, location, price min/max). One can also use this repo for general analysis regarding flights.
+This project provides tools and models for users to analyze, forecast, and collect data regarding flights and prices. There are currently many features in initial stages and in development. The current features (as of 8/29/22) are:
+
+- Scraping tools for Google Flights
+- Base analytical tools/methods for price forecasting/summary
+- Models to demonstrate ML techniques on forecasting
+- API for access to previously collected data
 
 ## Table of Contents
 - [Overview](#Overview)
 - [Usage](#usage)
-- [Cache Data](#cache-data)
+- [Updates & New Features](#updates-&-new-features)
 - [Real Usage](#real-usage) 😄
 
 
@@ -25,7 +29,9 @@ Note that the following packages are **absolutely required** as dependencies:
 - selenium (make sure to update your [chromedriver](https://chromedriver.chromium.org)!)
 - json
 
-The main scraping function that makes up the backbone of most other functionalities is `scrape_data`. Note that the `cache` parameter refers to whether this output should be saved in a caching system. See [caching](#cache-data).
+You can easily install this by running `pip install -r requirements.txt`.
+
+The main scraping function that makes up the backbone of most other functionalities is `scrape_data`. Note that the `cache` parameter refers to whether this output should be saved in a caching system. See further documentation on caching (to be available soon).
 
 	# Parameter documentation
 	# scrape_data(origin : str, destination : str, date_leave : str, date_return : str, cache : bool = False) -> dict
@@ -38,7 +44,11 @@ The main scraping function that makes up the backbone of most other functionalit
 	leave_dates = ['2022-05-20', '2022-05-21', '2022-05-22']
 	return_dates = ['2022-06-10', '2022-06-11', '2022-06-12']
 	range_result = scrape_data('JFK', 'IST', leave_dates, return_dates)
+	
+## Updates & New Features
 
+
+<!--
 ## Cache Data
 
 The caching system for this application is mainly designed to make the loading of data more efficient. For the moment, this component of the application hasn't been designed well for the public to easily use so I would suggest that most people leave it alone, or fork the repository and modify some of the functions to create folders in the destinations that they would prefer. The key caching functions are:
@@ -51,7 +61,7 @@ The caching system for this application is mainly designed to make the loading o
 - `check_cached`
 
 All of these functions are clearly documented in the `scraping.py` file.
-
+-->
 <!--## To Do
 
 - [x] Scrape data and clean it
