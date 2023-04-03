@@ -2,4 +2,3 @@ tqdm
 numpy
 pandas
 selenium
-json
