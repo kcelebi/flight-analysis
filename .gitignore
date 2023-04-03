@@ -10,3 +10,9 @@ cached/
 *.Rproj
 
 flight_analysis_app/
+API/
+examples/
+forecasting/
+src/
+tests/
+.pytest_cache/
