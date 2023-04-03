@@ -1,3 +1,4 @@
+[![kcelebi](https://circleci.com/gh/kcelebi/flight_analysis.svg?style=svg)](https://circleci.com/gh/kcelebi/flight_analysis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Flight Analysis
