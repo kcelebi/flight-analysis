@@ -37,4 +37,13 @@ def test_6():
 	assert func2res.date.shape[0] > 0, "Test 6 Failed".
 
 def test_7():
-	assert func2res.origin == "IST", "Test 7 Failed"
+	assert func2res.origin == "IST", "Test 7 Failed".
+
+def test_8():
+	assert func2res.dest == "CDG", "Test 8 Failed".
+
+def test_9():
+	assert func2res.date_leave == "2023-07-15", "Test 9 Failed."
+
+def test_10():
+	assert func2res.date_return == "2023-07-20", "Test 10 Failed."
