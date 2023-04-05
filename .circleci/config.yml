@@ -23,6 +23,7 @@ jobs:
     docker:
       - image: cimg/python:3.10.2
       - image: selenium/standalone-chrome:3.11.0
+      - image: circleci/node:7.10
 
     # Checkout the code as the first step. This is a dedicated CircleCI step.
     # The python orb's install-packages step will install the dependencies from a Pipfile via Pipenv by default.
