@@ -9,7 +9,11 @@ def func_0():
 def func_1():
 	return Scrape("LGA", "RDU", "2023-05-15", "2023-06-15")
 
+def func_2():
+	return Scrape("IST", "CDG", "2023-07-15", "2023-07-20")
+
 func1res = func_1()
+func2res = func_2()
 
 def test_0():
 	assert func_0(), "Test 0 Failed"
@@ -28,3 +32,9 @@ def test_4():
 
 def test_5():
 	assert func1res.date_return == "2023-06-15", "Test 5 Failed."
+
+def test_6():
+	assert func2res.date.shape[0] > 0, "Test 6 Failed".
+
+def test_7():
+	assert func2res.origin == "IST", "Test 7 Failed"
