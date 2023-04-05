@@ -13,6 +13,6 @@ jobs:
           fetch-depth: 0
       - run: python3 -m pip install --upgrade build && python3 -m build
       - name: Publish package
-        uses: pypa/flight_analysis@release/v1
+        uses: pypa/flight-analysis@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
