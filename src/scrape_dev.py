@@ -6,12 +6,9 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from datetime import date, datetime, timedelta
-from typing import overload
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import json
-import os
 
 __all__ = ['Scrape']
 
