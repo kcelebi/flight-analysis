@@ -128,6 +128,20 @@ class _Scrape:
 		return _Scrape._parse_columns(partition, self._date_leave, self._date_return)
 
 	@staticmethod
+	def _get_driver():
+		driver = None
+		try:
+			driver = webdriver.Chrome()
+		except:
+			raise Exception(
+				'''Appropriate ChromeDriver version not found.\n
+				Make sure Chromedriver is downloaded with appropriate version of Chrome.\n
+				In Chrome, Go to Settings --> About Chrome to find version.\n 
+				Visit https://chromedriver.chromium.org and download matching ChromeDriver version.
+				'''
+			)
+
+	@staticmethod
 	def _make_url_request(url):
 		driver = webdriver.Chrome()#'/Users/kayacelebi/Downloads/chromedriver')
 		driver.get(url)
