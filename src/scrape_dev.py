@@ -122,7 +122,7 @@ class _Scrape:
 
 	@staticmethod
 	def _make_url_request(url):
-		driver = webdriver.ChromeDriver()#'/Users/kayacelebi/Downloads/chromedriver')
+		driver = webdriver.Chrome()#'/Users/kayacelebi/Downloads/chromedriver')
 		driver.get(url)
 
 		# Waiting and initial XPATH cleaning
