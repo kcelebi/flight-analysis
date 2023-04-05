@@ -11,3 +11,5 @@ cached/
 
 flight_analysis_app/
 docs/
+
+.pytest_cache/

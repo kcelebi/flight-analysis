@@ -42,23 +42,23 @@ __all__  = ['scrape_data', 'make_url', 'cache_data', 'iterative_caching', 'load_
     Function saves file with name "../flight_analysis_app/cached/origin_dest_dateleave_datereturn.json"
 '''
 def cache_data(data : dict, origin : str, dest : str) -> None:
-    file_name = make_filename(origin = origin, dest = dest)
+	file_name = make_filename(origin = origin, dest = dest)
 
-    if file_name in os.listdir('../flight_analysis_app/cached'):
-        old_data = load_cached(origin = origin, dest = dest, return_df = False)
+	if file_name in os.listdir('../flight_analysis_app/cached'):
+		old_data = load_cached(origin = origin, dest = dest, return_df = False)
 
-        for key in list(old_data.keys()):
-            last_index = int(list(old_data[key].keys())[-1]) + 1
-            for idx, val in enumerate(data[key]):
-                old_data[key][last_index + idx] = val
+		for key in list(old_data.keys()):
+			last_index = int(list(old_data[key].keys())[-1]) + 1
+			for idx, val in enumerate(data[key]):
+				old_data[key][last_index + idx] = val
 
-        data = old_data
+		data = old_data
 
-    file = open('../flight_analysis_app/cached/' + file_name, 'w')
+	file = open('../flight_analysis_app/cached/' + file_name, 'w')
 
-    json.dump(data, file)
+	json.dump(data, file)
 
-    file.close()
+	file.close()
 
 
 '''
