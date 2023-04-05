@@ -19,13 +19,18 @@ class _Scrape:
 		self._dest = None
 		self._date_leave = None
 		self._date_return = None
-		self._cache = None
 		self._data = None
 
 	def __call__(self, *args):
-		self._set_properties(*args)
-		self._data = self._scrape_data()
-		return self
+		if len(args) == 4:
+			self._set_properties(*args)
+			self._data = self._scrape_data()
+			return self
+		else:
+			self._set_properties(*(args[:-1]))
+			obj = self.clone()
+			obj.data = args[-1]
+			return obj
 
 	def __str__(self):
 		return "{dl}: {org} --> {dest}\n{dr}: {dest} --> {org}".format(
@@ -44,9 +49,11 @@ class _Scrape:
 		)
 
 	def clone(self):
-		return _Scrape()._set_properties(
+		obj = _Scrape()
+		obj._set_properties(
 			self._origin, self._dest, self._date_leave, self._date_return
 		)
+		return obj
 
 	'''
 		Set properties upon scraper called.
