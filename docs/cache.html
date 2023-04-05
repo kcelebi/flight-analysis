@@ -9,7 +9,7 @@
 		<link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-		<link rel="icon" href="plane.ico">
+		<!--<link rel="icon" href="/img/icon.png">-->
 		<script async defer src="https://buttons.github.io/buttons.js"></script>
 		<style>
 			html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
@@ -31,7 +31,7 @@
 		<div class="w3-top">
 			<div class="w3-bar w3-theme w3-top w3-left-align w3-large">
 				<a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
-				<a href="#" class="w3-bar-item w3-button w3-theme-l1">Home</a>
+				<a href="index.html" class="w3-bar-item w3-button w3-theme-l1">Home</a>
 				<a href="about.html" class="w3-bar-item w3-button w3-hide-small w3-hover-white">About</a>
 				<a href="https://github.com/kcelebi/flight_analysis" class="w3-bar-item w3-button w3-hide-small w3-hover-white">GitHub</a>
 		 		<a href="https://pypi.org/project/flight_analysis/" class="w3-bar-item w3-button w3-hide-small w3-hover-white">PyPI</a>
@@ -46,9 +46,9 @@
 				<i class="fa fa-remove"></i>
 			</a>
 			<h4 class="w3-bar-item"><b>Menu</b></h4>
-			<a class="w3-bar-item w3-button w3-hover-black" href="#install">Installation</a>
-			<a style="padding-left: 30%;" class="w3-bar-item w3-button w3-hover-black" href="#usage">- Usage</a>
+			<a class="w3-bar-item w3-button w3-hover-black" href="index.html#install">Installation</a>
 			<a class="w3-bar-item w3-button w3-hover-black" href="scrape.html">Scraping</a>
+			<a style="padding-left: 30%;" class="w3-bar-item w3-button w3-hover-black" href="#">- Cache</a>
 			<a class="w3-bar-item w3-button w3-hover-black" href="db.html">Database</a>
 			<a class="w3-bar-item w3-button w3-hover-black" href="analysis.html">Analysis</a>
 		</nav>
@@ -61,53 +61,15 @@
 
 			<div class="w3-row w3-padding-64">
 				<div class="w3-threequarter w3-container">
-					<h1 class="w3-text-teal">Introduction</h1>
+					<h1 class='w3-text-teal'>Caching Google Flights Results</h1>
 					<a class="github-button" href="https://github.com/kcelebi" aria-label="Follow @kcelebi on GitHub" data-size='large'>Follow @kcelebi</a>
 					<a class="github-button" href="https://github.com/kcelebi/flight_analysis" data-icon="octicon-star" aria-label="Star kcelebi/riscv-assembler on GitHub" data-size='large'>Star</a>
 					<a id='install'></a>
 					<a class="github-button" href="https://github.com/kcelebi/flight_analysis/subscription" data-icon="octicon-eye" data-size="large" aria-label="Watch kcelebi/flight_analysis on GitHub">Watch</a>
+
+					<h2 class='w3-text-teal'>Under construction!!</h2>
 			      
 
-			      <p>This package contains tools and functions that can collect flight data! Documentation being updated, sorry!</p>
-
-			      <p>Feel free to <a href = "https://github.com/kcelebi/flight_analysis">open an issue</a> or <a href="html/contact.html">contact</a> me with any questions/inquiries.</p>
-			      <h1 class="w3-text-teal">Installation</h1>
-			      <h2 class='w3-text-teal'>To be Uploaded to PyPI, clone/fork from GitHub for now!!!</h2>
-
-			      <p>The package is designed for Python version >=3.8 and can be installed using pip:</p>
-			      <div class='w3-code notranslate'>
-			      	$ pip install flight-analysis
-			      </div>
-
-			      <p>If issues arise try:</p>
-			      <div class='w3-code notranslate'>
-			      	$ python3 -m pip install flight-analysis
-			  	</div>
-			    
-
-			    <a id='usage'></a>
-			    <h1 class="w3-text-teal">Usage</h1>
-
-			    <p>The base usage for this package is to scrape flight data. We obtain a <code class='w3-codespan'>Scrape()</code> object which maintains the scraping results as well as meta-data. Here is some starter code:</p>
-
-			    <div class='w3-code notranslate'>
-			      	from src.scrape import * <br>
-
-			      	<br>
-
-			      	# Scrapes Google Flights for round-trip JFK to IST, leave July 15, 2023, return July 25, 2023. <br>
-			      	result = Scrape("JFK", "IST", "2023-07-15", "2023-07-25") <br>
-
-			      	<br>
-
-			      	# Obtain data + info <br>
-			      	flights = result.data # outputs as a Pandas dataframe<br>
-			      	origin = result.origin<br>
-			      	dest = result.dest<br>
-			      	date_leave = result.date_leave<br>
-			      	date_return = result.date_return<br>
-
-			     </div>
 
 			</div>
 
