@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 from pathlib import Path
 #from src.scraping import *
-from src.scrape_dev import *
+from src.google_flight_analysis.scrape import *
 
 def func_0():
 	return True
