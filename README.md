@@ -4,10 +4,13 @@
 
 # Flight Analysis
 
-This project provides tools and models for users to analyze, forecast, and collect data regarding flights and prices. There are currently many features in initial stages and in development. The current features (as of 8/29/22) are:
+This project provides tools and models for users to analyze, forecast, and collect data regarding flights and prices. There are currently many features in initial stages and in development. The current features (as of 4/5/2023) are:
 
 - Scraping tools for Google Flights
 - Base analytical tools/methods for price forecasting/summary
+
+The features in development are:
+
 - Models to demonstrate ML techniques on forecasting
 - API for access to previously collected data
 
@@ -28,26 +31,42 @@ The web scraping tool is currently functional only for scraping round trip fligh
 
 Note that the following packages are **absolutely required** as dependencies:
 - tqdm
-- selenium (make sure to update your [chromedriver](https://chromedriver.chromium.org)!)
-- json
+- selenium **(make sure to update your [ChromeDriver](https://chromedriver.chromium.org)!)**
+- pandas
+- numpy
 
-You can easily install this by running `pip install -r requirements.txt`.
+You can easily install this by running either installing the Python package `google-flight-analysis`:
 
-The main scraping function that makes up the backbone of most other functionalities is `scrape_data`. Note that the `cache` parameter refers to whether this output should be saved in a caching system. See further documentation on caching (to be available soon).
+	pip install google-flight-analysis
 
-	# Parameter documentation
-	# scrape_data(origin : str, destination : str, date_leave : str, date_return : str, cache : bool = False) -> dict
+or forking/cloning this repository. Upon doing so, make sure to install the dependencies and update ChromeDriver to match your Google Chrome version.
+
+	pip install -r requirements.txt
+
+
+The main scraping function that makes up the backbone of most other functionalities is `Scrape()`. It serves also as a data object, preserving the flight information as well as meta-data from your query. For Python package users, import as follows:
+
+	from google_flight_analysis.scrape import *
+
+For GitHub repository cloners, import as follows from the root of the repository:
+
+	from src.google_flight_analysis.scrape import *
+
+Here is some quick starter code to accomplish the basic tasks. Find more in the [documentation](https://kcelebi.github.io/flight-analysis/).
+
 	# Try to keep the dates in format YYYY-mm-dd
-	
-	result = scrape_data('JFK', 'IST', '2022-05-20', '2022-06-10')
-	
-	# Can also input list of date strings for date_leave and date_return
-	
-	leave_dates = ['2022-05-20', '2022-05-21', '2022-05-22']
-	return_dates = ['2022-06-10', '2022-06-11', '2022-06-12']
-	range_result = scrape_data('JFK', 'IST', leave_dates, return_dates)
-	
+	result = Scrape('JFK', 'IST', '2022-05-20', '2022-06-10') # obtain our scrape object
+
+	dataframe = result.data # outputs a Pandas DF with flight prices/info
+	origin = result.origin # 'JFK'
+	dest = result.dest # 'IST'
+	date_leave = result.date_leave # '2022-05-20'
+	date_return = result.date_return # '2022-06-10'
+
+
 ## Updates & New Features
+
+Performing a complete revamp of this package, including new addition to PyPI. Documentation is being updated frequently, contact for any questions.
 
 
 <!--

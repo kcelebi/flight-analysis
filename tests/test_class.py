@@ -1,8 +1,10 @@
 import pytest
 import pandas as pd
 from pathlib import Path
-#from src.scraping import *
+import os
+
 from src.google_flight_analysis.scrape import *
+from src.google_flight_analysis.cache import *
 
 def func_0():
 	return True
@@ -13,8 +15,17 @@ res1 = Scrape("LGA", "RDU", "2023-05-15", "2023-06-15", res1)
 res2 = pd.read_csv('tests/test_data/test2.csv')
 res2 = Scrape("IST", "CDG", "2023-07-15", "2023-07-20", res2)
 
+os.system('rm tests/test_data/LGA-RDU.csv')
+os.system('rm tests/test_data/CDG-IST.csv')
+os.system('rm -rf tests/test_data/.access')
+
+CacheControl('tests/test_data/', res1)
+CacheControl('tests/test_data/', res2)
+
 def test_0():
 	assert func_0(), "Test 0 Failed"
+
+#-------QUERY 1
 
 def test_1():
 	assert res1.data.shape[0] > 0, "Test 1 Failed."
@@ -31,6 +42,8 @@ def test_4():
 def test_5():
 	assert res1.date_return == "2023-06-15", "Test 5 Failed."
 
+#-------QUERY 2
+
 def test_6():
 	assert res2.data.shape[0] > 0, "Test 6 Failed."
 
@@ -45,3 +58,19 @@ def test_9():
 
 def test_10():
 	assert res2.date_return == "2023-07-20", "Test 10 Failed."
+
+#-------CACHE 1
+
+def test_11():
+	assert os.path.isfile('tests/test_data/LGA-RDU.csv'), "Test 11 Failed."
+
+def test_12():
+	df = pd.read_csv('tests/test_data/LGA-RDU.csv')
+	assert df.shape[0] > 0 and df.shape[1] > 0, "Test 12 Failed."
+
+def test_13():
+	assert os.path.isfile('tests/test_data/CDG-IST.csv'), "Test 13 Failed."
+
+def test_14():
+	df = pd.read_csv('tests/test_data/CDG-IST.csv')
+	assert df.shape[0] > 0 and df.shape[1] > 0, "Test 14 Failed."
