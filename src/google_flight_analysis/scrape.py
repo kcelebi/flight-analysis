@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-__all__ = ['Scrape']
+__all__ = ['Scrape', '_Scrape']
 
 class _Scrape:
 
@@ -25,7 +25,9 @@ class _Scrape:
 		if len(args) == 4:
 			self._set_properties(*args)
 			self._data = self._scrape_data()
-			return self
+			obj = self.clone()
+			obj.data = self._data
+			return obj
 		else:
 			self._set_properties(*(args[:-1]))
 			obj = self.clone()
@@ -41,7 +43,8 @@ class _Scrape:
 		)
 
 	def __repr__(self):
-		return "{dl}: {org} --> {dest}\n{dr}: {dest} --> {org}".format(
+		return "{n} RESULTS FOR:\n{dl}: {org} --> {dest}\n{dr}: {dest} --> {org}".format(
+			n = self._data.shape[0],
 			dl = self._date_leave,
 			dr = self._date_return,
 			org = self._origin,

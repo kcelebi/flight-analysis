@@ -1,4 +1,4 @@
-[![kcelebi](https://circleci.com/gh/kcelebi/flight_analysis.svg?style=svg)](https://circleci.com/gh/kcelebi/flight_analysis)
+[![kcelebi](https://circleci.com/gh/kcelebi/flight-analysis.svg?style=svg)](https://circleci.com/gh/kcelebi/flight-analysis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Flight Analysis
@@ -19,7 +19,7 @@ This project provides tools and models for users to analyze, forecast, and colle
 
 ## Overview
 
-Flight price calculation can either use newly scraped data (scrapes upon running it) or cached data that reports a price-change confidence determined by a trained model. Currently, many features of this application are in development. You can find updates and use some of the functionalities online [here](https://kayacelebi.shinyapps.io/flight_analysis_app/).
+Flight price calculation can either use newly scraped data (scrapes upon running it) or cached data that reports a price-change confidence determined by a trained model. Currently, many features of this application are in development.
 
 ## Usage
 
