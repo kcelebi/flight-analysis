@@ -16,3 +16,4 @@ forecasting/
 src/
 tests/
 .pytest_cache/
+deprecated_src/
