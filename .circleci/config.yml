@@ -32,8 +32,8 @@ jobs:
       - checkout
       # DO OUR STUFF
       - run:
-        name: Update pip
-        command: python3.10 -m pip install --upgrade pip
+          name: Update pip
+          command: python3.10 -m pip install --upgrade pip
       - python/install-packages:
           pkg-manager: pip
           # app-dir: ~/project/package-directory/  # If you're requirements.txt isn't in the root directory.
