@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from datetime import date, datetime, timedelta
+import sqlite3
 import json
 import os
 
@@ -17,13 +18,13 @@ class _CacheControl:
 		self.directory = None
 		self.access = None
 	'''
-		args = root, obj(Scrape), obj(Scrape) ...
+		args = root, obj(Scrape), obj(Scrape) ..., db?
 	'''
 	def __call__(self, *args):
 		self.directory, self.access = _CacheControl._check_dir(args[0])
-		for obj in tqdm(args[1:], desc = "Caching Data"):
+		for obj in tqdm(args[1:-1], desc = "Caching Data"):
 			if _CacheControl._check_scrape(obj):
-				self.cache(obj)
+				self.cache(obj, args[-1])
 
 	def __str__(self):
 		return "Function to store scraped data."
@@ -31,11 +32,14 @@ class _CacheControl:
 	def __repr__(self):
 		return "<Function to store scraped data: CacheControl>"
 
-	def cache(self, obj):
+	def cache(self, obj, db):
 		fname = self.directory + _CacheControl._get_file_name(obj.origin, obj.dest, access = False)
 		access = self.access + _CacheControl._get_file_name(obj.origin, obj.dest, access = True)
 		df = obj.data
 		current_access = df['Access Date'].values[0]
+
+		if db:
+			...
 
 		# If file already exists
 		if os.path.isfile(fname):
@@ -51,6 +55,18 @@ class _CacheControl:
 		df.to_csv(fname)
 		with open(access, 'w') as file:
 			file.write(current_access)
+
+
+	def connect_db(self):
+		conn = sqlite3.connect(self.directory + 'flights.db')
+
+		return conn
+
+	def disconnect_db(self, conn):
+		conn.close()
+
+	def create_table()
+		...
 
 
 	'''
