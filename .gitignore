@@ -13,3 +13,4 @@ flight_analysis_app/
 docs/
 
 .pytest_cache/
+deprecated_src/
