@@ -4,6 +4,9 @@
 
 # Flight Analysis
 
+# ALL PRODUCTION MOVED TO [https://www.github.com/celebi-pkg/flight-analysis]
+There won't be any more updates in this repository, please migrate there for the newest versions and fixes.
+
 This project provides tools and models for users to analyze, forecast, and collect data regarding flights and prices. There are currently many features in initial stages and in development. The current features (as of 4/5/2023) are:
 
 - Scraping tools for Google Flights
